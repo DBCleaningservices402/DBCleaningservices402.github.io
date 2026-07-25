@@ -190,6 +190,14 @@
     .steps{grid-template-columns:1fr;}
     .field-row{grid-template-columns:1fr;}
     .nav-links{display:none;}
+    nav .wrap{gap:10px;}
+    .logo{font-size:1.05rem; gap:6px; white-space:nowrap;}
+    .logo-mark{width:10px; height:10px; flex-shrink:0;}
+    .nav-cta{padding:9px 16px; font-size:0.8rem; white-space:nowrap; flex-shrink:0;}
+  }
+  @media (max-width: 400px){
+    .logo{font-size:0.92rem;}
+    .nav-cta{padding:8px 13px; font-size:0.75rem;}
   }
   @media (prefers-reduced-motion: reduce){
     *{transition:none !important; animation:none !important;}
@@ -207,7 +215,7 @@
       <a href="#book">Book</a>
       <a href="#pay">Payment</a>
     </div>
-    <a href="#book" class="btn btn-primary">Get a quote</a>
+    <a href="#book" class="btn btn-primary nav-cta">Get a quote</a>
   </div>
 </nav>
 
@@ -417,7 +425,7 @@
   <div class="wrap footer-top">
     <div class="footer-brand">
       <img src="https://drive.google.com/thumbnail?id=1KEUNFPL6o9Zx9E33l5DdZnF6HEqdhPXl&sz=w1000" alt="D&amp;B Cleaning Services logo" style="height:224px; width:auto; display:block;" class="footer-logo">
-      <a href="mailto:hello@dbcleaningservices.com" class="footer-email">hello@dbcleaningservices.com</a>
+      <a href="mailto:dbcleaningservice402@gmail.com" class="footer-email">dbcleaningservice402@gmail.com</a>
       <a href="https://www.instagram.com/db_cleaning_service402" target="_blank" rel="noopener" class="footer-social">
       <svg width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <defs>
@@ -662,7 +670,9 @@ function updateInvoice() {
 
 ['propertyType', 'service', 'size'].forEach(function(id){
   const el = document.getElementById(id);
-  if (el) el.addEventListener('change', updateInvoice);
+  if (!el) return;
+  el.addEventListener('change', updateInvoice);
+  el.addEventListener('input', updateInvoice);
 });
 updateInvoice();
 </script>
