@@ -329,6 +329,7 @@
     </div>
     <div class="booking-grid">
       <div class="card">
+        <div class="mono" style="color:#8B9290; margin-bottom:14px; display:block;">Step 1 — Tell us what you need</div>
         <form id="quoteForm">
           <div class="field-row">
             <div><label for="name">Full name</label><input id="name" required></div>
@@ -368,28 +369,17 @@
             </div>
             <div></div>
           </div>
-          <div class="selected-date" id="selectedDate">No date selected yet — choose one from the calendar →</div>
           <div><label for="notes">Anything we should know?</label><textarea id="notes" placeholder="Pets, gate codes, problem areas..."></textarea></div>
-          <button type="submit" class="btn btn-primary">Request booking</button>
-          <div class="confirm-msg" id="confirmMsg">Thanks! Your request for <span id="confirmDate"></span> has been noted. We'll confirm by email or phone shortly.</div>
+          <button type="submit" class="btn btn-primary">Send my details</button>
+          <div class="confirm-msg" id="confirmMsg">Thanks! We've got your details. Now grab an open time on the calendar to the right to lock in your appointment →</div>
         </form>
       </div>
 
       <div class="card">
-        <div class="cal-head">
-          <button class="cal-nav-btn" id="prevMonth" aria-label="Previous month">‹</button>
-          <strong id="monthLabel"></strong>
-          <button class="cal-nav-btn" id="nextMonth" aria-label="Next month">›</button>
-        </div>
-        <div class="cal-grid" id="calGrid"></div>
-        <div class="mono" style="margin-top:18px; color:#8B9290; display:block;">Preferred time</div>
-        <div class="time-slots">
-          <div class="slot">8:00 AM</div>
-          <div class="slot">10:00 AM</div>
-          <div class="slot">12:00 PM</div>
-          <div class="slot">2:00 PM</div>
-          <div class="slot">4:00 PM</div>
-        </div>
+        <div class="mono" style="color:#8B9290; margin-bottom:14px; display:block;">Step 2 — Pick an open time</div>
+        <!-- Google Calendar Appointment Scheduling begin -->
+        <iframe src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ3K5kmSlAEbb7XjgPtZizMO39PdnUkSwAukDxAfRkoAqLiQAKXBu6w-UOgBQLkcgTF8rKZMDCSU?gv=true" style="border: 0" width="100%" height="600" frameborder="0"></iframe>
+        <!-- end Google Calendar Appointment Scheduling -->
       </div>
     </div>
   </div>
@@ -477,82 +467,8 @@ function tick(){
 }
 setInterval(tick, 1000);
 
-// Calendar
-let viewDate = new Date();
-let selectedDay = null;
-const monthLabel = document.getElementById('monthLabel');
-const calGrid = document.getElementById('calGrid');
-const dows = ['S','M','T','W','T','F','S'];
-
-function renderCal(){
-  calGrid.innerHTML = '';
-  dows.forEach(d=>{
-    const el = document.createElement('div');
-    el.className='cal-dow'; el.textContent=d;
-    calGrid.appendChild(el);
-  });
-  const year = viewDate.getFullYear(), month = viewDate.getMonth();
-  monthLabel.textContent = viewDate.toLocaleString('default',{month:'long', year:'numeric'});
-  const firstDay = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month+1, 0).getDate();
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  for(let e=0; e<firstDay; e++){
-    const el = document.createElement('div');
-    el.className='cal-day empty';
-    calGrid.appendChild(el);
-  }
-  for(let d=1; d<=daysInMonth; d++){
-    const el = document.createElement('div');
-    el.className='cal-day';
-    el.textContent = d;
-    const thisDate = new Date(year, month, d);
-    const isPast = thisDate < today;
-    const isSunday = thisDate.getDay() === 0;
-    if(isPast || isSunday){
-      el.classList.add('disabled');
-    } else {
-      el.addEventListener('click', ()=>{
-        selectedDay = thisDate;
-        document.querySelectorAll('.cal-day').forEach(c=>c.classList.remove('selected'));
-        el.classList.add('selected');
-        updateSelectedDate();
-      });
-    }
-    calGrid.appendChild(el);
-  }
-}
-
-let selectedTime = null;
-document.querySelectorAll('.slot').forEach(slot=>{
-  slot.addEventListener('click', ()=>{
-    document.querySelectorAll('.slot').forEach(s=>s.classList.remove('selected'));
-    slot.classList.add('selected');
-    selectedTime = slot.textContent;
-    updateSelectedDate();
-  });
-});
-
-function updateSelectedDate(){
-  const dateEl = document.getElementById('selectedDate');
-  if(selectedDay){
-    const dateStr = selectedDay.toLocaleDateString('default',{weekday:'long', month:'long', day:'numeric'});
-    dateEl.textContent = `Selected: ${dateStr}${selectedTime ? ' at ' + selectedTime : ' — pick a time below'}`;
-  }
-}
-
-document.getElementById('prevMonth').addEventListener('click', ()=>{
-  viewDate.setMonth(viewDate.getMonth()-1);
-  renderCal();
-});
-document.getElementById('nextMonth').addEventListener('click', ()=>{
-  viewDate.setMonth(viewDate.getMonth()+1);
-  renderCal();
-});
-renderCal();
-
 // Form submit — silently posts into the linked Google Sheet via the Google Form backend,
-// then shows the existing on-page confirmation message.
+// then shows the existing on-page confirmation message pointing to the calendar embed.
 const GOOGLE_FORM_ACTION = 'https://docs.google.com/forms/d/e/1FAIpQLSd7aO3QM9GxiyqWv5S_r0Tdgh09TSLrem3WJZ_RP574ux3euw/formResponse';
 const GOOGLE_FORM_ENTRIES = {
   name: 'entry.199489470',
@@ -569,10 +485,6 @@ const GOOGLE_FORM_ENTRIES = {
 document.getElementById('quoteForm').addEventListener('submit', function(e){
   e.preventDefault();
 
-  const dateStr = selectedDay
-    ? selectedDay.toLocaleDateString('default',{weekday:'long', month:'long', day:'numeric', year:'numeric'}) + (selectedTime ? ' at ' + selectedTime : '')
-    : '';
-
   const values = {
     name: document.getElementById('name').value,
     phone: document.getElementById('phone').value,
@@ -581,7 +493,7 @@ document.getElementById('quoteForm').addEventListener('submit', function(e){
     propertyType: document.getElementById('propertyType').value,
     service: document.getElementById('service').value,
     size: document.getElementById('size').value,
-    dateTime: dateStr,
+    dateTime: 'See Google Calendar booking (Step 2)',
     notes: document.getElementById('notes').value
   };
 
@@ -600,10 +512,7 @@ document.getElementById('quoteForm').addEventListener('submit', function(e){
     // since we can't verify success anyway with no-cors.
   });
 
-  const confirmMsg = document.getElementById('confirmMsg');
-  const confirmDate = document.getElementById('confirmDate');
-  confirmDate.textContent = dateStr || 'your requested time';
-  confirmMsg.classList.add('show');
+  document.getElementById('confirmMsg').classList.add('show');
 });
 // Smooth-scroll for internal nav links (works reliably even inside embedded/sandboxed iframes,
 // where native #hash navigation can silently fail)
