@@ -657,6 +657,16 @@ document.getElementById('quoteForm').addEventListener('submit', function(e){
   const confirmDate = document.getElementById('confirmDate');
   confirmDate.textContent = dateStr || 'your requested time';
   confirmMsg.classList.add('show');
+
+  // Clear the form and reset the calendar/time-slot selection for the next visitor
+  e.target.reset();
+  selectedDay = null;
+  selectedTime = null;
+  document.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected'));
+  document.getElementById('selectedDate').textContent = 'No date selected yet — choose a time for us to come bid your job →';
+  updateSlotAvailability();
+  updateInvoice();
 });
 // Smooth-scroll for internal nav links (works reliably even inside embedded/sandboxed iframes,
 // where native #hash navigation can silently fail)
