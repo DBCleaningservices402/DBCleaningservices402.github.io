@@ -141,6 +141,7 @@
   .cal-day.selected{background:var(--eucalyptus); color:#fff; font-weight:600;}
   .time-slots{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
   .slot{padding:8px 14px; border:1px solid #D8DDD9; border-radius:999px; font-size:0.82rem; cursor:pointer; background:#FDFDFB;}
+  .slot.disabled{opacity:0.4; cursor:not-allowed; background:#EFEFEF; text-decoration:line-through; pointer-events:none;}
   .slot.selected{background:var(--slate); color:#fff; border-color:var(--slate);}
 
   /* PAYMENT */
@@ -553,10 +554,40 @@ function renderCal(){
         document.querySelectorAll('.cal-day').forEach(c=>c.classList.remove('selected'));
         el.classList.add('selected');
         updateSelectedDate();
+        updateSlotAvailability();
       });
     }
     calGrid.appendChild(el);
   }
+}
+
+// --- Busy-time checking against the owner's real Google Calendar ---
+const AVAILABILITY_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwoclpdt8Ov4ZSaJo2ikA5Sx2QsQzgzOiIgyG1rMIPTXvnwj_GMO446eeNIoNtqzKRtdA/exec';
+let busyRanges = [];
+
+function fetchBusyTimes(){
+  fetch(AVAILABILITY_ENDPOINT)
+    .then(res => res.json())
+    .then(data => {
+      busyRanges = (data.busy || []).map(b => ({
+        start: new Date(b.start),
+        end: new Date(b.end)
+      }));
+      updateSlotAvailability();
+    })
+    .catch(() => {
+      // If the calendar check fails to load, fall back to showing all slots
+      // rather than blocking the whole booking flow.
+      busyRanges = [];
+    });
+}
+fetchBusyTimes();
+
+function isSlotBusy(day, hour){
+  if(!day) return false;
+  const slotStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, 0, 0);
+  const slotEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour + 1, 0, 0);
+  return busyRanges.some(range => slotStart < range.end && slotEnd > range.start);
 }
 
 let selectedTime = null;
@@ -582,8 +613,11 @@ function updateSlotAvailability(){
   const maxHour = propertyType === 'Residential' ? 18 : 24; // Residential cuts off after 6 PM; Commercial has no restriction
   document.querySelectorAll('.slot').forEach(slot=>{
     const hour = parseInt(slot.getAttribute('data-hour'), 10);
-    const allowed = hour <= maxHour;
-    slot.style.display = allowed ? '' : 'none';
+    const withinHours = hour <= maxHour;
+    const busy = selectedDay ? isSlotBusy(selectedDay, hour) : false;
+    const allowed = withinHours && !busy;
+    slot.style.display = withinHours ? '' : 'none';
+    slot.classList.toggle('disabled', withinHours && busy);
     if(!allowed && slot.classList.contains('selected')){
       slot.classList.remove('selected');
       selectedTime = null;
